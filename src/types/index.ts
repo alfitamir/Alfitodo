@@ -19,7 +19,6 @@ export interface TaskInput {
 }
 
 export interface AppSettings {
-  geminiApiKey: string;
   theme: 'light' | 'dark';
 }
 
