@@ -11,13 +11,13 @@ import { useSettings } from './hooks/useSettings';
 import { useTasks } from './hooks/useTasks';
 import { formatArabicLongDate, todayKey } from './lib/date';
 import { parseBrainDump } from './services/gemini';
-import { demoUser, signOutUser } from './services/auth';
+import { demoUser, hasStoredSession, signInWithGoogle, signOutUser } from './services/auth';
 import type { Task, TaskInput } from './types';
 
 const emptyInput = (): TaskInput => ({ title: '', dueDate: todayKey(), recurrence: 'once' });
 
 function App() {
-  const [signedIn, setSignedIn] = useState(true);
+  const [signedIn, setSignedIn] = useState(hasStoredSession);
   const [profileOpen, setProfileOpen] = useState(false);
   const [upcomingOpen, setUpcomingOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -33,8 +33,6 @@ function App() {
     const total = groups.today.length + groups.completed.length;
     return total ? Math.round((groups.completed.length / total) * 100) : 0;
   }, [groups]);
-
-  if (!signedIn) return <WelcomeScreen onSignIn={() => setSignedIn(true)} />;
 
   const showToast = (message: string, undoIds?: string[]) => {
     setToast({ message, undoIds });
@@ -81,6 +79,13 @@ function App() {
     setSignedIn(false);
     setProfileOpen(false);
   };
+
+  const handleSignIn = async () => {
+    await signInWithGoogle();
+    setSignedIn(true);
+  };
+
+  if (!signedIn) return <WelcomeScreen onSignIn={handleSignIn} />;
 
   return <div className="app-shell">
     <div className="app-container">
