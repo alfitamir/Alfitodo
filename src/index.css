@@ -40,6 +40,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--canvas); }
+#root { width: 100%; min-height: 100vh; }
 button, input, textarea, select { font: inherit; }
 button { cursor: pointer; }
 
@@ -203,8 +204,8 @@ button { cursor: pointer; }
 .toast button { border: 0; color: var(--mint-dark); background: transparent; font-weight: 800; font-size: 11px; }
 
 /* Welcome */
-.welcome-shell { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: radial-gradient(circle at 52% 33%, rgba(42,169,143,.13), transparent 27rem), var(--canvas); }
-.welcome-card { width: min(100%, 430px); text-align: center; padding: 47px 31px 35px; border-radius: 25px; }
+.welcome-shell { min-height: 100vh; position: relative; padding: 20px; background: radial-gradient(circle at 52% 33%, rgba(42,169,143,.13), transparent 27rem), var(--canvas); }
+.welcome-card { width: min(100%, 430px); position: absolute; top: 50%; left: 50%; margin: 0; transform: translate(-50%, -50%); text-align: center; padding: 47px 31px 35px; border-radius: 25px; }
 .welcome-mark { width: 73px; height: 73px; display: grid; place-items: center; position: relative; margin: 0 auto 25px; border-radius: 24px; color: #d9f3ed; background: var(--mint-dark); box-shadow: 0 16px 30px rgba(20,119,102,.2); }
 .welcome-mark span { position: absolute; display: grid; place-items: center; width: 24px; height: 24px; right: -4px; bottom: -4px; border: 4px solid var(--canvas); border-radius: 50%; background: #f5c966; color: #6e5318; }
 .welcome-card h1 { margin: 12px 0 7px; font-size: 31px; letter-spacing: -.07em; }
