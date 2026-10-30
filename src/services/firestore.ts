@@ -6,7 +6,7 @@ export interface TaskRepository {
   list(userId: string): Promise<Task[]>;
   save(task: Task): Promise<void>;
   remove(userId: string, taskId: string): Promise<void>;
-  sync(userId: string, tasks: Task[]): Promise<void>;
+  sync(userId: string, previousTasks: Task[], nextTasks: Task[]): Promise<void>;
 }
 
 const syncQueues = new Map<string, Promise<void>>();
@@ -28,22 +28,25 @@ export const firestoreRepository: TaskRepository = {
   async remove(userId, taskId) {
     await deleteDoc(doc(taskCollection(userId), taskId));
   },
-  async sync(userId, tasks) {
+  async sync(userId, previousTasks, nextTasks) {
     const previous = syncQueues.get(userId) ?? Promise.resolve();
     const operation = previous.catch(() => undefined).then(async () => {
-      const ref = taskCollection(userId);
-      const snapshot = await getDocs(ref);
-      const existing = new Map(snapshot.docs.map((item) => [item.id, item.data()]));
-      const nextIds = new Set(tasks.map((task) => task.id));
-      const writes: Array<{ kind: 'delete'; ref: ReturnType<typeof doc> } | { kind: 'set'; ref: ReturnType<typeof doc>; data: Task }> = [];
+      const oldById = new Map(previousTasks.map((task) => [task.id, task]));
+      const nextById = new Map(nextTasks.map((task) => [task.id, task]));
+      const writes: Array<
+        { kind: 'delete'; ref: ReturnType<typeof doc> }
+        | { kind: 'set'; ref: ReturnType<typeof doc>; data: DocumentData }
+      > = [];
 
-      snapshot.docs.forEach((item) => {
-        if (!nextIds.has(item.id)) writes.push({ kind: 'delete', ref: item.ref });
+      // Delete only documents this client previously loaded. Never sweep unknown
+      // documents created by another browser/device after this client's snapshot.
+      previousTasks.forEach((task) => {
+        if (!nextById.has(task.id)) writes.push({ kind: 'delete', ref: doc(taskCollection(userId), task.id) });
       });
-      tasks.forEach((task) => {
-        const old = existing.get(task.id) as DocumentData | undefined;
+      nextTasks.forEach((task) => {
+        const old = oldById.get(task.id);
         if (!old || JSON.stringify(old) !== JSON.stringify(task)) {
-          writes.push({ kind: 'set', ref: doc(ref, task.id), data: task });
+          writes.push({ kind: 'set', ref: doc(taskCollection(userId), task.id), data: task as unknown as DocumentData });
         }
       });
 
