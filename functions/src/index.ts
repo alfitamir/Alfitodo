@@ -49,12 +49,14 @@ export const parseTasks = onCall(
 
     try {
       const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
-      const today = new Intl.DateTimeFormat('en-CA', {
+      const dateParts = new Intl.DateTimeFormat('en-US', {
         timeZone: 'Asia/Riyadh',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
-      }).format(new Date());
+      }).formatToParts(new Date());
+      const datePart = (type: string) => dateParts.find((part) => part.type === type)?.value ?? '';
+      const today = `${datePart('year')}-${datePart('month')}-${datePart('day')}`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
