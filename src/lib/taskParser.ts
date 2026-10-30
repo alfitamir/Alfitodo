@@ -1,4 +1,4 @@
-import { todayKey } from './date';
+import { todayKey } from './date.ts';
 import type { Recurrence, TaskInput } from '../types';
 
 /** Offline Arabic task parser used when no server-side AI service is configured. */
