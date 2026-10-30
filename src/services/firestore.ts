@@ -35,7 +35,7 @@ export const firestoreRepository: TaskRepository = {
       const snapshot = await getDocs(ref);
       const existing = new Map(snapshot.docs.map((item) => [item.id, item.data()]));
       const nextIds = new Set(tasks.map((task) => task.id));
-      const writes: Array<{ kind: 'delete'; ref: typeof snapshot.docs[number]['ref'] } | { kind: 'set'; ref: ReturnType<typeof doc>; data: Task }> = [];
+      const writes: Array<{ kind: 'delete'; ref: ReturnType<typeof doc> } | { kind: 'set'; ref: ReturnType<typeof doc>; data: Task }> = [];
 
       snapshot.docs.forEach((item) => {
         if (!nextIds.has(item.id)) writes.push({ kind: 'delete', ref: item.ref });
