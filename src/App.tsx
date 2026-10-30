@@ -29,7 +29,7 @@ function App() {
   const [quickInput, setQuickInput] = useState<TaskInput>(emptyInput);
   const [toast, setToast] = useState<{ message: string; undoIds?: string[] } | null>(null);
   const { settings, setSettings } = useSettings();
-  const { ready: tasksReady, loadError: tasksLoadError, retryLoad, groups, addTask, addTasks, toggleTask, updateTask, deleteTask, moveToToday, moveAllToToday } = useTasks(user?.uid ?? 'demo-user');
+  const { ready: tasksReady, loadError: tasksLoadError, retryLoad, syncError, retrySync, groups, addTask, addTasks, toggleTask, updateTask, deleteTask, moveToToday, moveAllToToday } = useTasks(user?.uid ?? 'demo-user');
   const { canInstall, install } = useInstallPrompt();
 
   const progress = useMemo(() => {
@@ -125,7 +125,7 @@ function App() {
         <section className="task-section completed-section"><button className="completed-heading" onClick={() => setCompletedOpen((value) => !value)}><div className="section-title-wrap"><span className="section-icon done"><ShieldCheck size={17} /></span><div><h2>المهام المنجزة <span>✅</span></h2><small>المنجزة اليوم ({groups.completed.length})</small></div></div><div className="completed-toggle"><MoreHorizontal size={17} /> <ChevronDown size={17} className={completedOpen ? 'rotated' : ''} /></div></button>{completedOpen && <div className="task-list">{groups.completed.length ? groups.completed.map((task) => <TaskRow key={task.id} task={task} completed onToggle={toggleTask} onEdit={handleEdit} onDelete={deleteTask} />) : <div className="completed-empty">ستظهر هنا المهام التي تنجزها اليوم.</div>}</div>}</section>
       </main>
 
-      <footer className="app-footer"><span><span className="footer-dot" /> {user?.isDemo ? 'وضع Demo المحلي مفعّل' : 'مزامنة Firebase مفعّلة'}</span><span>{user?.isDemo ? 'بياناتك محفوظة على هذا الجهاز' : 'بياناتك مرتبطة بحسابك'}</span></footer>
+      <footer className="app-footer"><span><span className="footer-dot" /> {user?.isDemo ? 'وضع Demo المحلي مفعّل' : 'مزامنة Firebase مفعّلة'}</span><span>{user?.isDemo ? 'بياناتك محفوظة على هذا الجهاز' : 'بياناتك مرتبطة بحسابك'}</span>{syncError && <span role="alert">{syncError} <button className="text-button" onClick={retrySync}>إعادة المزامنة</button></span>}</footer>
     </div>
     <UpcomingDrawer open={upcomingOpen} tasks={groups.upcoming} onClose={() => setUpcomingOpen(false)} onEdit={handleEdit} />
     <SettingsModal open={settingsOpen} settings={settings} onChange={setSettings} onClose={() => setSettingsOpen(false)} onSave={handleSaveSettings} />
