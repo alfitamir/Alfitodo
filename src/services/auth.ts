@@ -30,7 +30,7 @@ export function hasStoredSession(): boolean {
 }
 
 export function subscribeToAuth(callback: (user: DemoUser | null) => void): () => void {
-  if (firebaseAuth) return onAuthStateChanged(firebaseAuth, (user) => callback(user ? mapFirebaseUser(user) : null));
+  if (firebaseAuth) return onAuthStateChanged(firebaseAuth, (user) => callback(user ? mapFirebaseUser(user) : (hasStoredSession() ? demoUser : null)));
   callback(hasStoredSession() ? demoUser : null);
   return () => undefined;
 }
