@@ -18,20 +18,20 @@ function makeTask(input: TaskInput, userId: string): Task {
 
 export function useTasks(userId = 'demo-user') {
   const [tasks, setTasks] = useState<Task[]>(() => userId === 'demo-user' ? loadTasks() : []);
-  const [ready, setReady] = useState(() => userId === 'demo-user' || !firestoreDb);
+  const [loadedUserId, setLoadedUserId] = useState<string | null>(() => userId === 'demo-user' || !firestoreDb ? userId : null);
+  const ready = loadedUserId === userId;
 
   useEffect(() => {
     let active = true;
-    setReady(false);
     if (userId === 'demo-user' || !firestoreDb) {
       setTasks(loadTasks().filter((task) => task.userId === 'demo-user'));
-      setReady(true);
+      setLoadedUserId(userId);
       return () => { active = false; };
     }
     firestoreRepository.list(userId)
       .then((remoteTasks) => { if (active) setTasks(remoteTasks); })
       .catch((error) => { console.error('Unable to load cloud tasks', error); if (active) setTasks([]); })
-      .finally(() => { if (active) setReady(true); });
+      .finally(() => { if (active) setLoadedUserId(userId); });
     return () => { active = false; };
   }, [userId]);
 
