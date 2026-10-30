@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, setDoc, writeBatch } from 'firebase/firestore';
 import type { Task } from '../types';
 import { firestoreDb } from './firebase';
 
@@ -6,6 +6,7 @@ export interface TaskRepository {
   list(userId: string): Promise<Task[]>;
   save(task: Task): Promise<void>;
   remove(userId: string, taskId: string): Promise<void>;
+  sync(userId: string, tasks: Task[]): Promise<void>;
 }
 
 function taskCollection(userId: string) {
@@ -13,7 +14,7 @@ function taskCollection(userId: string) {
   return collection(firestoreDb, 'users', userId, 'tasks');
 }
 
-/** User-scoped Firestore repository. Security Rules must enforce the same UID boundary. */
+/** All documents are scoped below the authenticated user's UID. */
 export const firestoreRepository: TaskRepository = {
   async list(userId) {
     const snapshot = await getDocs(taskCollection(userId));
@@ -24,5 +25,14 @@ export const firestoreRepository: TaskRepository = {
   },
   async remove(userId, taskId) {
     await deleteDoc(doc(taskCollection(userId), taskId));
+  },
+  async sync(userId, tasks) {
+    const ref = taskCollection(userId);
+    const snapshot = await getDocs(ref);
+    const nextIds = new Set(tasks.map((task) => task.id));
+    const batch = writeBatch(firestoreDb!);
+    snapshot.docs.forEach((item) => { if (!nextIds.has(item.id)) batch.delete(item.ref); });
+    tasks.forEach((task) => batch.set(doc(ref, task.id), task));
+    await batch.commit();
   },
 };
