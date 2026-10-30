@@ -21,6 +21,7 @@ export function useTasks(userId = 'demo-user') {
   const [loadedUserId, setLoadedUserId] = useState<string | null>(() => userId === 'demo-user' || !firestoreDb ? userId : null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const ready = loadedUserId === userId && !loadError;
   const retryLoad = useCallback(() => { setLoadError(null); setLoadAttempt((value) => value + 1); }, []);
 
@@ -53,8 +54,22 @@ export function useTasks(userId = 'demo-user') {
       return;
     }
     void firestoreRepository.sync(userId, next)
-      .catch((error) => console.error('Unable to sync tasks to Firestore', error));
+      .then(() => setSyncError(null))
+      .catch((error) => {
+        console.error('Unable to sync tasks to Firestore', error);
+        setSyncError('تعذر حفظ التغييرات في السحابة. أعد المحاولة قبل إغلاق التطبيق.');
+      });
   }, [userId]);
+
+  const retrySync = useCallback(() => {
+    if (userId === 'demo-user' || !firestoreDb) return;
+    void firestoreRepository.sync(userId, tasks)
+      .then(() => setSyncError(null))
+      .catch((error) => {
+        console.error('Unable to retry Firestore sync', error);
+        setSyncError('ما زالت المزامنة متوقفة. تحقق من الاتصال والصلاحيات ثم حاول مجددًا.');
+      });
+  }, [userId, tasks]);
 
   const addTask = useCallback((input: TaskInput) => {
     const task = makeTask(input, userId);
@@ -125,5 +140,5 @@ export function useTasks(userId = 'demo-user') {
     };
   }, [tasks]);
 
-  return { tasks, ready, loadError, retryLoad, groups, addTask, addTasks, toggleTask, updateTask, deleteTask, moveToToday, moveAllToToday };
+  return { tasks, ready, loadError, retryLoad, syncError, retrySync, groups, addTask, addTasks, toggleTask, updateTask, deleteTask, moveToToday, moveAllToToday };
 }
