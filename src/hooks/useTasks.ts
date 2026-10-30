@@ -33,12 +33,16 @@ export function useTasks(userId = 'demo-user') {
       return () => { active = false; };
     }
     firestoreRepository.list(userId)
-      .then((remoteTasks) => { if (active) setTasks(remoteTasks); })
+      .then((remoteTasks) => {
+        if (active) {
+          setTasks(remoteTasks);
+          setLoadedUserId(userId);
+        }
+      })
       .catch((error) => {
         console.error('Unable to load cloud tasks', error);
         if (active) setLoadError('تعذر تحميل مهامك من Firebase. تحقق من الاتصال والصلاحيات ثم أعد المحاولة.');
-      })
-      .then(() => { if (active && !loadError) setLoadedUserId(userId); });
+      });
     return () => { active = false; };
   }, [userId, loadAttempt]);
 
