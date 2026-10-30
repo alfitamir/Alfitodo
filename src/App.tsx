@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, ChevronDown, Download, LogOut, MoreHorizontal, Settings, ShieldCheck, Sparkles, Sun, Moon, UserRound, X } from 'lucide-react';
 import { SmartInput } from './components/SmartInput';
 import { QuickAdd } from './components/QuickAdd';
@@ -11,13 +11,16 @@ import { useSettings } from './hooks/useSettings';
 import { useTasks } from './hooks/useTasks';
 import { formatArabicLongDate, todayKey } from './lib/date';
 import { parseBrainDump } from './services/gemini';
-import { demoUser, hasStoredSession, signInWithGoogle, signOutUser } from './services/auth';
+import { isFirebaseConfigured } from './services/firebase';
+import { signInDemo, signInWithGoogle, signOutUser, subscribeToAuth } from './services/auth';
 import type { Task, TaskInput } from './types';
 
 const emptyInput = (): TaskInput => ({ title: '', dueDate: todayKey(), recurrence: 'once' });
 
 function App() {
-  const [signedIn, setSignedIn] = useState(hasStoredSession);
+  const [user, setUser] = useState<DemoUser | null>(null);
+  const signedIn = Boolean(user);
+  useEffect(() => subscribeToAuth(setUser), []);
   const [profileOpen, setProfileOpen] = useState(false);
   const [upcomingOpen, setUpcomingOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -26,7 +29,7 @@ function App() {
   const [quickInput, setQuickInput] = useState<TaskInput>(emptyInput);
   const [toast, setToast] = useState<{ message: string; undoIds?: string[] } | null>(null);
   const { settings, setSettings } = useSettings();
-  const { groups, addTask, addTasks, toggleTask, updateTask, deleteTask, moveToToday, moveAllToToday } = useTasks();
+  const { groups, addTask, addTasks, toggleTask, updateTask, deleteTask, moveToToday, moveAllToToday } = useTasks(user?.uid ?? 'demo-user');
   const { canInstall, install } = useInstallPrompt();
 
   const progress = useMemo(() => {
@@ -76,16 +79,18 @@ function App() {
 
   const handleSignOut = async () => {
     await signOutUser();
-    setSignedIn(false);
+    setUser(null);
     setProfileOpen(false);
   };
 
   const handleSignIn = async () => {
-    await signInWithGoogle();
-    setSignedIn(true);
+    const signedInUser = await signInWithGoogle();
+    setUser(signedInUser);
   };
 
-  if (!signedIn) return <WelcomeScreen onSignIn={handleSignIn} />;
+  const handleDemoSignIn = async () => setUser(await signInDemo());
+
+  if (!signedIn) return <WelcomeScreen onSignIn={handleSignIn} onDemoSignIn={handleDemoSignIn} firebaseAvailable={isFirebaseConfigured} />;
 
   return <div className="app-shell">
     <div className="app-container">
@@ -96,7 +101,7 @@ function App() {
           <button className="icon-button header-icon" onClick={() => setUpcomingOpen(true)} aria-label="جدول المهام المستقبلية"><CalendarDays size={19} /><span className="action-dot" /></button>
           <div className="profile-wrap">
             <button className="profile-button" onClick={() => setProfileOpen((value) => !value)}><span className="avatar">T</span><ChevronDown size={15} /></button>
-            {profileOpen && <div className="profile-menu surface"><div className="profile-summary"><span className="avatar large">T</span><div><strong>{demoUser.displayName}</strong><small>وضع Demo المحلي</small></div></div><button onClick={() => { setSettingsOpen(true); setProfileOpen(false); }}><Settings size={16} /> إعدادات وتكاملات</button><button onClick={() => setSettings((value) => ({ ...value, theme: value.theme === 'light' ? 'dark' : 'light' }))}>{settings.theme === 'light' ? <Moon size={16} /> : <Sun size={16} />} تبديل المظهر</button><button className="danger-text" onClick={handleSignOut}><LogOut size={16} /> تسجيل الخروج</button></div>}
+            {profileOpen && <div className="profile-menu surface"><div className="profile-summary"><span className="avatar large">T</span><div><strong>{user?.displayName ?? 'User'}</strong><small>{user?.isDemo ? 'وضع Demo المحلي' : user?.email}</small></div></div><button onClick={() => { setSettingsOpen(true); setProfileOpen(false); }}><Settings size={16} /> إعدادات وتكاملات</button><button onClick={() => setSettings((value) => ({ ...value, theme: value.theme === 'light' ? 'dark' : 'light' }))}>{settings.theme === 'light' ? <Moon size={16} /> : <Sun size={16} />} تبديل المظهر</button><button className="danger-text" onClick={handleSignOut}><LogOut size={16} /> تسجيل الخروج</button></div>}
           </div>
         </div>
       </header>
@@ -114,7 +119,7 @@ function App() {
         <section className="task-section completed-section"><button className="completed-heading" onClick={() => setCompletedOpen((value) => !value)}><div className="section-title-wrap"><span className="section-icon done"><ShieldCheck size={17} /></span><div><h2>المهام المنجزة <span>✅</span></h2><small>المنجزة اليوم ({groups.completed.length})</small></div></div><div className="completed-toggle"><MoreHorizontal size={17} /> <ChevronDown size={17} className={completedOpen ? 'rotated' : ''} /></div></button>{completedOpen && <div className="task-list">{groups.completed.length ? groups.completed.map((task) => <TaskRow key={task.id} task={task} completed onToggle={toggleTask} onEdit={handleEdit} onDelete={deleteTask} />) : <div className="completed-empty">ستظهر هنا المهام التي تنجزها اليوم.</div>}</div>}</section>
       </main>
 
-      <footer className="app-footer"><span><span className="footer-dot" /> وضع Demo المحلي مفعّل</span><span>بياناتك محفوظة على هذا الجهاز</span></footer>
+      <footer className="app-footer"><span><span className="footer-dot" /> {user?.isDemo ? 'وضع Demo المحلي مفعّل' : 'مزامنة Firebase مفعّلة'}</span><span>{user?.isDemo ? 'بياناتك محفوظة على هذا الجهاز' : 'بياناتك مرتبطة بحسابك'}</span></footer>
     </div>
     <UpcomingDrawer open={upcomingOpen} tasks={groups.upcoming} onClose={() => setUpcomingOpen(false)} onEdit={handleEdit} />
     <SettingsModal open={settingsOpen} settings={settings} onChange={setSettings} onClose={() => setSettingsOpen(false)} onSave={handleSaveSettings} />
