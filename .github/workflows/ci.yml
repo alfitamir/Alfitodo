@@ -22,3 +22,7 @@ jobs:
       - run: pnpm build
       - name: Build Firebase Functions
         run: npm install --prefix functions && npm run build --prefix functions
+      - name: Report Firebase Functions dependency advisories
+        run: |
+          npm audit --prefix functions --json > /tmp/functions-audit.json || true
+          node -e "const a=require('/tmp/functions-audit.json'); const v=a.vulnerabilities||{}; for (const [name,item] of Object.entries(v)) console.log(name + ': ' + item.severity + '; fix=' + JSON.stringify(item.fixAvailable) + '; advisories=' + item.via.map(x => typeof x === 'string' ? x : x.title).join(' | ')); console.log('Summary:', JSON.stringify(a.metadata?.vulnerabilities || {}));"
