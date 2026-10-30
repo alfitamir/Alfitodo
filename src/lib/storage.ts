@@ -12,7 +12,6 @@ const LEGACY_DEMO_TITLES = new Set([
 ]);
 
 const defaultSettings: AppSettings = {
-  geminiApiKey: '',
   theme: 'light',
 };
 
@@ -67,8 +66,6 @@ export function loadSettings(): AppSettings {
     const parsed: unknown = JSON.parse(saved);
     if (!isRecord(parsed)) return { ...defaultSettings };
     return {
-      // API keys are deliberately not restored from localStorage.
-      geminiApiKey: '',
       theme: parsed.theme === 'dark' ? 'dark' : 'light',
     };
   } catch {
