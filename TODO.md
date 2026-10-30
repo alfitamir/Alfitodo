@@ -22,7 +22,7 @@
 
 ## 4. الإدخال الذكي والإضافة اليدوية
 - [x] عرض صندوق واضح بعنوان `إضافة ملخص المهام بالذكاء الاصطناعي ✨` في الصفحة الرئيسية، مع textarea يوزع الملخص إلى مهام منظمة عند الضغط على زر التقسيم.
-- [x] تجهيز خدمة Gemini مع `gemini-2.5-flash` وStructured JSON، مع fallback محلي عند غياب المفتاح.
+- [x] تحليل مهام Gemini عبر Firebase Callable Function مع Structured JSON، والتحقق من المستخدم والحد من معدل الطلبات؛ وضع Demo يستخدم المحلل المحلي.
 - [x] إظهار إضافة فورية مع Toast وإمكانية التراجع عن الإضافة الجماعية.
 - [x] شريط `إضافة مهمة سريعة` بعنوان وتاريخ افتراضي اليوم وقائمة التكرار العربية وزر `+`.
 - [x] بدء وضع Demo المحلي دون أي مهام مسجلة افتراضيًا، وتنظيف عناوين المهام التجريبية القديمة من التخزين المحلي دون حذف المهام التي أضافها المستخدم.
@@ -35,18 +35,18 @@
 
 ## 6. PWA والإعدادات والتكاملات
 - [x] إضافة `manifest.webmanifest` وservice worker وتسجيله وتحسين viewport للهاتف.
-- [x] تخزين تفضيل المظهر محليًا دون حفظ مفاتيح API في localStorage.
+- [x] تخزين تفضيل المظهر محليًا دون حفظ مفاتيح API في المتصفح.
 - [x] تحميل Firebase Web config من متغيرات البيئة `VITE_FIREBASE_*`.
 - [x] ربط Google Authentication عبر Firebase Auth عند توافر الإعدادات.
 - [x] ربط المهام بمسارات Firestore المنفصلة حسب UID.
 - [x] إضافة `firestore.rules` لمنع المستخدم من قراءة/تعديل مهام مستخدم آخر.
 - [x] إبقاء Demo كخيار صريح مستقل عن حساب Firebase.
 - [x] توفير `.env.example` وCI للتحقق من الاختبارات والبناء.
-- [ ] إضافة قيم Firebase الحقيقية إلى إعدادات النشر، تفعيل Google provider، ونشر قواعد Firestore.
-- [ ] نقل Gemini API calls إلى backend proxy قبل استخدام مفتاح إنتاج.
+- [ ] إضافة قيم Firebase الحقيقية إلى إعدادات النشر، تفعيل Google provider، ونشر قواعد Firestore وCloud Functions.
+- [x] نقل Gemini API calls إلى Firebase Cloud Function مع Firebase Secret Manager.
 - [x] توفير `public/manus-routes.json` لمسار الصفحة الرئيسي.
 
 ## 7. التحقق والتسليم
 - [x] إضافة اختبارات تاريخية لمحرك التاريخ والتكرار.
-- [ ] نجاح CI build/test على GitHub Actions.
-- [ ] اختبار Google sign-in وFirestore باستخدام مشروع Firebase فعلي.
+- [x] نجاح CI build/test على GitHub Actions (تحديثه ليتضمن بناء Cloud Functions).
+- [ ] اختبار Google sign-in وFirestore وGemini Cloud Function باستخدام مشروع Firebase فعلي.
