@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { addRecurrence, isCompletedToday, todayKey } from '../lib/date';
 import { loadTasks, saveTasks } from '../lib/storage';
 import { firestoreRepository } from '../services/firestore';
@@ -18,6 +18,7 @@ function makeTask(input: TaskInput, userId: string): Task {
 
 export function useTasks(userId = 'demo-user') {
   const [tasks, setTasks] = useState<Task[]>(() => userId === 'demo-user' ? loadTasks() : []);
+  const lastSyncedTasks = useRef<Task[]>(userId === 'demo-user' ? loadTasks() : []);
   const [loadedUserId, setLoadedUserId] = useState<string | null>(() => userId === 'demo-user' || !firestoreDb ? userId : null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -29,13 +30,16 @@ export function useTasks(userId = 'demo-user') {
     let active = true;
     setLoadError(null);
     if (userId === 'demo-user' || !firestoreDb) {
-      setTasks(loadTasks().filter((task) => task.userId === 'demo-user'));
+      const localTasks = loadTasks().filter((task) => task.userId === 'demo-user');
+      lastSyncedTasks.current = localTasks;
+      setTasks(localTasks);
       setLoadedUserId(userId);
       return () => { active = false; };
     }
     firestoreRepository.list(userId)
       .then((remoteTasks) => {
         if (active) {
+          lastSyncedTasks.current = remoteTasks;
           setTasks(remoteTasks);
           setLoadedUserId(userId);
         }
@@ -53,8 +57,9 @@ export function useTasks(userId = 'demo-user') {
       saveTasks(next);
       return;
     }
-    void firestoreRepository.sync(userId, next)
-      .then(() => setSyncError(null))
+    const previouslySynced = lastSyncedTasks.current;
+    void firestoreRepository.sync(userId, previouslySynced, next)
+      .then(() => { lastSyncedTasks.current = next; setSyncError(null); })
       .catch((error) => {
         console.error('Unable to sync tasks to Firestore', error);
         setSyncError('تعذر حفظ التغييرات في السحابة. أعد المحاولة قبل إغلاق التطبيق.');
@@ -63,8 +68,8 @@ export function useTasks(userId = 'demo-user') {
 
   const retrySync = useCallback(() => {
     if (userId === 'demo-user' || !firestoreDb) return;
-    void firestoreRepository.sync(userId, tasks)
-      .then(() => setSyncError(null))
+    void firestoreRepository.sync(userId, lastSyncedTasks.current, tasks)
+      .then(() => { lastSyncedTasks.current = tasks; setSyncError(null); })
       .catch((error) => {
         console.error('Unable to retry Firestore sync', error);
         setSyncError('ما زالت المزامنة متوقفة. تحقق من الاتصال والصلاحيات ثم حاول مجددًا.');
