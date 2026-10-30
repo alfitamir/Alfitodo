@@ -37,7 +37,7 @@ async function enforceRateLimit(uid: string): Promise<void> {
 }
 
 export const parseTasks = onCall(
-  { region: 'us-central1', secrets: [geminiApiKey], timeoutSeconds: 30, memory: '256MiB' },
+  { region: 'us-central1', secrets: [geminiApiKey], timeoutSeconds: 30, memory: '256MiB', maxInstances: 3 },
   async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in to use AI task parsing.');
     const text = request.data?.text;
