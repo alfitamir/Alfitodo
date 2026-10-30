@@ -1,8 +1,14 @@
 import type { AppSettings, Task } from '../types';
-import { createDemoTasks } from './demo';
 
 const TASKS_KEY = 'tamer-do-list.tasks.v1';
 const SETTINGS_KEY = 'tamer-do-list.settings.v1';
+const LEGACY_DEMO_TITLES = new Set([
+  'مراجعة أولويات اليوم وترتيب المهام المهمة',
+  'قراءة 20 صفحة من الكتاب',
+  'إرسال ملخص الاجتماع إلى الفريق',
+  'التخطيط لموعد الغد',
+  'شرب الماء ومراجعة قائمة الصحة',
+]);
 
 const defaultSettings: AppSettings = {
   geminiApiKey: '',
@@ -13,13 +19,18 @@ const defaultSettings: AppSettings = {
 export function loadTasks(): Task[] {
   try {
     const saved = localStorage.getItem(TASKS_KEY);
-    if (saved) return JSON.parse(saved) as Task[];
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        const cleaned = (parsed as Task[]).filter((task) => !LEGACY_DEMO_TITLES.has(task.title));
+        if (cleaned.length !== parsed.length) saveTasks(cleaned);
+        return cleaned;
+      }
+    }
   } catch {
-    // Use the demo seed when storage is unavailable or corrupted.
+    // Start with an empty board when storage is unavailable or corrupted.
   }
-  const demo = createDemoTasks();
-  saveTasks(demo);
-  return demo;
+  return [];
 }
 
 export function saveTasks(tasks: Task[]): void {

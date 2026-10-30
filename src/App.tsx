@@ -17,7 +17,7 @@ import type { Task, TaskInput } from './types';
 const emptyInput = (): TaskInput => ({ title: '', dueDate: todayKey(), recurrence: 'once' });
 
 function App() {
-  const [signedIn, setSignedIn] = useState(false);
+  const [signedIn, setSignedIn] = useState(true);
   const [profileOpen, setProfileOpen] = useState(false);
   const [upcomingOpen, setUpcomingOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
