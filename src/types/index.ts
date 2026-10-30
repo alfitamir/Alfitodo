@@ -20,14 +20,15 @@ export interface TaskInput {
 
 export interface AppSettings {
   geminiApiKey: string;
-  firebaseConfig: string;
   theme: 'light' | 'dark';
 }
 
 export interface DemoUser {
+  uid: string;
   displayName: string;
   email: string;
   photoURL: string;
+  isDemo?: boolean;
 }
 
 export const recurrenceLabels: Record<Recurrence, string> = {
