@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { KeyRound, Moon, Save, Sun, X } from 'lucide-react';
+import { KeyRound, Moon, Save, Settings2, Sun, X } from 'lucide-react';
 import type { AppSettings } from '../types';
 
 interface SettingsModalProps { open: boolean; settings: AppSettings; onChange: (settings: AppSettings) => void; onClose: () => void; onSave: () => void; }
