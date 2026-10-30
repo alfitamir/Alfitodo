@@ -18,7 +18,7 @@ function makeTask(input: TaskInput, userId: string): Task {
 
 export function useTasks(userId = 'demo-user') {
   const [tasks, setTasks] = useState<Task[]>(() => userId === 'demo-user' ? loadTasks() : []);
-  const lastSyncedTasks = useRef<Task[]>(userId === 'demo-user' ? loadTasks() : []);
+  const lastSyncedTasks = useRef<Task[]>(tasks);
   const [loadedUserId, setLoadedUserId] = useState<string | null>(() => userId === 'demo-user' || !firestoreDb ? userId : null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
