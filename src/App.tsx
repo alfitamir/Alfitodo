@@ -29,7 +29,7 @@ function App() {
   const [quickInput, setQuickInput] = useState<TaskInput>(emptyInput);
   const [toast, setToast] = useState<{ message: string; undoIds?: string[] } | null>(null);
   const { settings, setSettings } = useSettings();
-  const { ready: tasksReady, groups, addTask, addTasks, toggleTask, updateTask, deleteTask, moveToToday, moveAllToToday } = useTasks(user?.uid ?? 'demo-user');
+  const { ready: tasksReady, loadError: tasksLoadError, retryLoad, groups, addTask, addTasks, toggleTask, updateTask, deleteTask, moveToToday, moveAllToToday } = useTasks(user?.uid ?? 'demo-user');
   const { canInstall, install } = useInstallPrompt();
 
   const progress = useMemo(() => {
@@ -96,7 +96,7 @@ function App() {
   const handleDemoSignIn = async () => setUser(await signInDemo());
 
   if (!signedIn) return <WelcomeScreen onSignIn={handleSignIn} onDemoSignIn={handleDemoSignIn} firebaseAvailable={isFirebaseConfigured} />;
-  if (!tasksReady) return <main className="welcome-shell"><div className="welcome-card surface"><span className="eyebrow">جارٍ تحميل مهامك من Firebase…</span></div></main>;
+  if (!tasksReady) return <main className="welcome-shell"><div className="welcome-card surface"><span className="eyebrow">{tasksLoadError ?? 'جارٍ تحميل مهامك من Firebase…'}</span>{tasksLoadError && <button className="primary-button full-button" onClick={retryLoad}>إعادة المحاولة</button>}</div></main>;
 
   return <div className="app-shell">
     <div className="app-container">
