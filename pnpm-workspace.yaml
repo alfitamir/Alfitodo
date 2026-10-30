@@ -1,0 +1,6 @@
+allowBuilds:
+  esbuild: true
+  sharp: true
+  '@firebase/util': true
+  '@google/genai': true
+  protobufjs: true
