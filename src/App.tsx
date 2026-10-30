@@ -13,7 +13,7 @@ import { formatArabicLongDate, todayKey } from './lib/date';
 import { parseBrainDump } from './services/gemini';
 import { isFirebaseConfigured } from './services/firebase';
 import { signInDemo, signInWithGoogle, signOutUser, subscribeToAuth } from './services/auth';
-import type { Task, TaskInput } from './types';
+import type { DemoUser, Task, TaskInput } from './types';
 
 const emptyInput = (): TaskInput => ({ title: '', dueDate: todayKey(), recurrence: 'once' });
 
