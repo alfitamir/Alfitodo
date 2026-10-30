@@ -5,3 +5,10 @@ dist
 !.env.example
 .DS_Store
 *.local
+
+# Firebase Functions build artifacts
+functions/node_modules/
+functions/lib/
+.firebase/
+firebase-debug.log
+firestore-debug.log
