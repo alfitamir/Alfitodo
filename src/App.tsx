@@ -52,7 +52,7 @@ function App() {
   const handleBrainDump = async (text: string) => {
     setBusy(true);
     try {
-      const parsed = await parseBrainDump(text, settings.geminiApiKey);
+      const parsed = await parseBrainDump(text);
       if (!parsed.length) {
         showToast('لم أجد مهام واضحة في النص. جرّب كتابة كل مهمة في سطر.');
         return;
@@ -60,7 +60,7 @@ function App() {
       const created = addTasks(parsed);
       showToast(`تمت إضافة ${created.length} مهام إلى جدولك.`, created.map((task) => task.id));
     } catch {
-      showToast('تعذر تحليل النص الآن. تأكد من مفتاح Gemini أو استخدم الوضع المحلي.');
+      showToast('تعذر تحليل النص الآن. تحقق من اتصالك أو جرّب الوضع المحلي.');
     } finally {
       setBusy(false);
     }
