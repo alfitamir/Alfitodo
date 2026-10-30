@@ -1,5 +1,5 @@
-import { GoogleGenAI } from '@google/genai';
-import { isValidDateKey, todayKey, getDayName } from '../lib/date';
+import { httpsCallable } from 'firebase/functions';
+import { firebaseAuth, firebaseFunctions } from './firebase';
 import { localHeuristicParse } from '../lib/taskParser';
 import type { Recurrence, TaskInput } from '../types';
 
@@ -12,36 +12,17 @@ function normaliseTasks(value: unknown): TaskInput[] {
     .filter((item) => typeof item.title === 'string' && item.title.trim())
     .map((item) => ({
       title: String(item.title).trim(),
-      dueDate: typeof item.dueDate === 'string' && isValidDateKey(item.dueDate) ? item.dueDate : todayKey(),
+      dueDate: typeof item.dueDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(item.dueDate) ? item.dueDate : '',
       recurrence: recurrenceValues.includes(item.recurrence as Recurrence) ? item.recurrence as Recurrence : 'once',
-    }));
+    }))
+    .filter((item) => item.dueDate);
 }
 
-export async function parseBrainDump(text: string, apiKey?: string): Promise<TaskInput[]> {
-  if (apiKey?.trim()) {
-    const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `حلّل النص التالي إلى مهام. تاريخ اليوم المحلي هو ${todayKey()}، واليوم هو ${getDayName()}. أعد JSON فقط كمصفوفة من العناصر التي تحتوي title وdueDate بصيغة YYYY-MM-DD وrecurrence من once أو daily أو weekly أو monthly أو yearly. إذا لم يذكر المستخدم تاريخًا فاجعل dueDate تاريخ اليوم. حافظ على لغة كل مهمة. النص: ${text}`,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              title: { type: 'string' },
-              dueDate: { type: 'string' },
-              recurrence: { type: 'string', enum: recurrenceValues },
-            },
-            required: ['title', 'dueDate', 'recurrence'],
-          },
-        },
-      },
-    });
-    return normaliseTasks(JSON.parse(response.text ?? '[]'));
-  }
+export async function parseBrainDump(text: string): Promise<TaskInput[]> {
+  const currentUser = firebaseAuth?.currentUser;
+  if (!currentUser || !firebaseFunctions) return localHeuristicParse(text);
 
-  return localHeuristicParse(text);
+  const parse = httpsCallable<{ text: string }, unknown>(firebaseFunctions, 'parseTasks');
+  const result = await parse({ text });
+  return normaliseTasks(result.data);
 }
-
