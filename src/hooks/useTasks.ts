@@ -19,10 +19,14 @@ function makeTask(input: TaskInput, userId: string): Task {
 export function useTasks(userId = 'demo-user') {
   const [tasks, setTasks] = useState<Task[]>(() => userId === 'demo-user' ? loadTasks() : []);
   const [loadedUserId, setLoadedUserId] = useState<string | null>(() => userId === 'demo-user' || !firestoreDb ? userId : null);
-  const ready = loadedUserId === userId;
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const ready = loadedUserId === userId && !loadError;
+  const retryLoad = useCallback(() => { setLoadError(null); setLoadAttempt((value) => value + 1); }, []);
 
   useEffect(() => {
     let active = true;
+    setLoadError(null);
     if (userId === 'demo-user' || !firestoreDb) {
       setTasks(loadTasks().filter((task) => task.userId === 'demo-user'));
       setLoadedUserId(userId);
@@ -30,10 +34,13 @@ export function useTasks(userId = 'demo-user') {
     }
     firestoreRepository.list(userId)
       .then((remoteTasks) => { if (active) setTasks(remoteTasks); })
-      .catch((error) => { console.error('Unable to load cloud tasks', error); if (active) setTasks([]); })
-      .finally(() => { if (active) setLoadedUserId(userId); });
+      .catch((error) => {
+        console.error('Unable to load cloud tasks', error);
+        if (active) setLoadError('تعذر تحميل مهامك من Firebase. تحقق من الاتصال والصلاحيات ثم أعد المحاولة.');
+      })
+      .then(() => { if (active && !loadError) setLoadedUserId(userId); });
     return () => { active = false; };
-  }, [userId]);
+  }, [userId, loadAttempt]);
 
   const commit = useCallback((next: Task[]) => {
     setTasks(next);
@@ -114,5 +121,5 @@ export function useTasks(userId = 'demo-user') {
     };
   }, [tasks]);
 
-  return { tasks, ready, groups, addTask, addTasks, toggleTask, updateTask, deleteTask, moveToToday, moveAllToToday };
+  return { tasks, ready, loadError, retryLoad, groups, addTask, addTasks, toggleTask, updateTask, deleteTask, moveToToday, moveAllToToday };
 }
