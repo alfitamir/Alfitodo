@@ -84,8 +84,13 @@ function App() {
   };
 
   const handleSignIn = async () => {
-    const signedInUser = await signInWithGoogle();
-    setUser(signedInUser);
+    try {
+      const signedInUser = await signInWithGoogle();
+      setUser(signedInUser);
+    } catch (error) {
+      console.error('Google sign-in failed', error);
+      window.alert('تعذر تسجيل الدخول باستخدام Google. تحقق من إعداد Firebase والنطاقات المصرّح بها ثم حاول مجددًا.');
+    }
   };
 
   const handleDemoSignIn = async () => setUser(await signInDemo());
