@@ -18,16 +18,20 @@ function makeTask(input: TaskInput, userId: string): Task {
 
 export function useTasks(userId = 'demo-user') {
   const [tasks, setTasks] = useState<Task[]>(() => userId === 'demo-user' ? loadTasks() : []);
+  const [ready, setReady] = useState(() => userId === 'demo-user' || !firestoreDb);
 
   useEffect(() => {
     let active = true;
+    setReady(false);
     if (userId === 'demo-user' || !firestoreDb) {
       setTasks(loadTasks().filter((task) => task.userId === 'demo-user'));
+      setReady(true);
       return () => { active = false; };
     }
     firestoreRepository.list(userId)
       .then((remoteTasks) => { if (active) setTasks(remoteTasks); })
-      .catch((error) => { console.error('Unable to load cloud tasks', error); if (active) setTasks([]); });
+      .catch((error) => { console.error('Unable to load cloud tasks', error); if (active) setTasks([]); })
+      .finally(() => { if (active) setReady(true); });
     return () => { active = false; };
   }, [userId]);
 
@@ -110,5 +114,5 @@ export function useTasks(userId = 'demo-user') {
     };
   }, [tasks]);
 
-  return { tasks, groups, addTask, addTasks, toggleTask, updateTask, deleteTask, moveToToday, moveAllToToday };
+  return { tasks, ready, groups, addTask, addTasks, toggleTask, updateTask, deleteTask, moveToToday, moveAllToToday };
 }
