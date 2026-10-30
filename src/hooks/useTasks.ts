@@ -37,7 +37,7 @@ export function useTasks(userId = 'demo-user') {
       saveTasks(next);
       return;
     }
-    void Promise.all(next.map((task) => firestoreRepository.save(task)))
+    void firestoreRepository.sync(userId, next)
       .catch((error) => console.error('Unable to sync tasks to Firestore', error));
   }, [userId]);
 
@@ -89,7 +89,6 @@ export function useTasks(userId = 'demo-user') {
 
   const deleteTask = useCallback((id: string) => {
     commit(tasks.filter((task) => task.id !== id));
-    if (userId !== 'demo-user' && firestoreDb) void firestoreRepository.remove(userId, id).catch((error) => console.error('Unable to delete cloud task', error));
   }, [commit, tasks, userId]);
 
   const moveToToday = useCallback((id: string) => {
