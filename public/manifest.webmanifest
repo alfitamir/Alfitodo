@@ -2,13 +2,13 @@
   "name": "Tamer Do List",
   "short_name": "Tamer Do List",
   "description": "مساحة هادئة لترتيب يومك.",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#f7f7f2",
   "theme_color": "#f7f7f2",
   "dir": "rtl",
   "lang": "ar",
   "icons": [
-    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]
 }
