@@ -1,5 +1,6 @@
 import { collection, deleteDoc, doc, getDocs, setDoc, writeBatch, type DocumentData } from 'firebase/firestore';
 import type { Task } from '../types';
+import { isValidDateKey } from '../lib/date';
 import { firestoreDb } from './firebase';
 
 export interface TaskRepository {
@@ -11,6 +12,17 @@ export interface TaskRepository {
 
 const syncQueues = new Map<string, Promise<void>>();
 
+function isTaskDocument(value: DocumentData, userId: string): value is Task {
+  return typeof value.id === 'string'
+    && typeof value.userId === 'string' && value.userId === userId
+    && typeof value.title === 'string' && value.title.trim().length > 0
+    && typeof value.dueDate === 'string' && isValidDateKey(value.dueDate)
+    && ['once', 'daily', 'weekly', 'monthly', 'yearly'].includes(String(value.recurrence))
+    && typeof value.isCompleted === 'boolean'
+    && (value.completedAt === null || (typeof value.completedAt === 'string' && !Number.isNaN(Date.parse(value.completedAt))))
+    && typeof value.createdAt === 'string' && !Number.isNaN(Date.parse(value.createdAt));
+}
+
 function taskCollection(userId: string) {
   if (!firestoreDb) throw new Error('Firestore is not configured.');
   return collection(firestoreDb, 'users', userId, 'tasks');
@@ -20,7 +32,7 @@ function taskCollection(userId: string) {
 export const firestoreRepository: TaskRepository = {
   async list(userId) {
     const snapshot = await getDocs(taskCollection(userId));
-    return snapshot.docs.map((item) => item.data() as Task);
+    return snapshot.docs.map((item) => item.data()).filter((item) => isTaskDocument(item, userId));
   },
   async save(task) {
     await setDoc(doc(taskCollection(task.userId), task.id), task);
