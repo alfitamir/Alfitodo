@@ -10,7 +10,7 @@
 - [x] حساب `today` اعتمادًا على التاريخ المحلي للجهاز.
 - [x] عرض مهام اليوم فقط عندما تكون `isCompleted == false` و`dueDate == today`.
 - [x] عرض المهام المتأخرة عندما تكون `isCompleted == false` و`dueDate` أقدم من `today`.
-- [x] عرض المهام المنجزة اليوم عندما تكون مكتملة و`completedAt` في اليوم المحلي الحالي أو `dueDate == today`.
+- [x] عرض المهام المنجزة اليوم اعتمادًا على `completedAt` المحلي فقط.
 - [x] عند إكمال مهمة متكررة، تعليم النسخة الحالية مكتملة وإنشاء النسخة التالية من التاريخ الأحدث بين `dueDate` و`today`: اليومية +1، الأسبوعية +7، الشهرية +1 شهر، والسنوية +1 سنة.
 - [x] عند إلغاء إكمال مهمة متكررة في نفس اليوم، إعادة فتحها وحذف النسخة المستقبلية لتجنب التكرار.
 
@@ -35,13 +35,18 @@
 
 ## 6. PWA والإعدادات والتكاملات
 - [x] إضافة `manifest.webmanifest` وservice worker وتسجيله وتحسين viewport للهاتف.
-- [x] إضافة نافذة إعدادات تسمح بإدخال Gemini API key وFirebase config محليًا دون حفظ أسرار في المستودع.
-- [x] تجهيز `services/auth.ts` و`services/firestore.ts` و`services/gemini.ts` لربط Firebase وGemini لاحقًا.
+- [x] تخزين تفضيل المظهر محليًا دون حفظ مفاتيح API في localStorage.
+- [x] تحميل Firebase Web config من متغيرات البيئة `VITE_FIREBASE_*`.
+- [x] ربط Google Authentication عبر Firebase Auth عند توافر الإعدادات.
+- [x] ربط المهام بمسارات Firestore المنفصلة حسب UID.
+- [x] إضافة `firestore.rules` لمنع المستخدم من قراءة/تعديل مهام مستخدم آخر.
+- [x] إبقاء Demo كخيار صريح مستقل عن حساب Firebase.
+- [x] توفير `.env.example` وCI للتحقق من الاختبارات والبناء.
+- [ ] إضافة قيم Firebase الحقيقية إلى إعدادات النشر، تفعيل Google provider، ونشر قواعد Firestore.
+- [ ] نقل Gemini API calls إلى backend proxy قبل استخدام مفتاح إنتاج.
 - [x] توفير `public/manus-routes.json` لمسار الصفحة الرئيسي.
-- [ ] ربط Firebase Authentication/Firestore الحقيقيين بعد تزويد إعدادات Firebase واعتماد قواعد الأمان.
 
 ## 7. التحقق والتسليم
-- [x] تشغيل TypeScript/JSON/CSS diagnostics والبناء بنجاح.
-- [x] خدمة التطبيق على المنفذ 3000 والتحقق من استجابة الصفحة الرئيسية.
-- [x] التحقق من أن `/manus-routes.json` يعيد JSON صحيحًا بدل SPA fallback.
-- [x] حفظ checkpoint النهائي للمشروع بعد آخر تعديل.
+- [x] إضافة اختبارات تاريخية لمحرك التاريخ والتكرار.
+- [ ] نجاح CI build/test على GitHub Actions.
+- [ ] اختبار Google sign-in وFirestore باستخدام مشروع Firebase فعلي.
