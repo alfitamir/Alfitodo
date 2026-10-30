@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import { todayKey, getDayName } from '../lib/date';
+import { isValidDateKey, todayKey, getDayName } from '../lib/date';
 import type { Recurrence, TaskInput } from '../types';
 
 const recurrenceValues: Recurrence[] = ['once', 'daily', 'weekly', 'monthly', 'yearly'];
@@ -7,11 +7,11 @@ const recurrenceValues: Recurrence[] = ['once', 'daily', 'weekly', 'monthly', 'y
 function normaliseTasks(value: unknown): TaskInput[] {
   if (!Array.isArray(value)) return [];
   return value
-    .map((item) => item as Partial<TaskInput>)
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null && !Array.isArray(item))
     .filter((item) => typeof item.title === 'string' && item.title.trim())
     .map((item) => ({
-      title: item.title!.trim(),
-      dueDate: /^\d{4}-\d{2}-\d{2}$/.test(item.dueDate ?? '') ? item.dueDate! : todayKey(),
+      title: String(item.title).trim(),
+      dueDate: typeof item.dueDate === 'string' && isValidDateKey(item.dueDate) ? item.dueDate : todayKey(),
       recurrence: recurrenceValues.includes(item.recurrence as Recurrence) ? item.recurrence as Recurrence : 'once',
     }));
 }
@@ -44,7 +44,7 @@ export async function parseBrainDump(text: string, apiKey?: string): Promise<Tas
   return localHeuristicParse(text);
 }
 
-function localHeuristicParse(text: string): TaskInput[] {
+export function localHeuristicParse(text: string): TaskInput[] {
   const today = todayKey();
   const segments = text
     .split(/[\n،,؛;]+/)
@@ -62,17 +62,23 @@ function localHeuristicParse(text: string): TaskInput[] {
           : /كل سنة|سنوي/.test(lower)
             ? 'yearly'
             : 'once';
-    const dueDate = /بكرة|غداً|غدا/.test(lower)
-      ? shiftDay(today, 1)
-      : /بعد بكرة|بعد غد/.test(lower)
-        ? shiftDay(today, 2)
+
+    // Match the longer expression first: "بعد بكرة" contains "بكرة".
+    const dueDate = /بعد بكرة|بعد غد/.test(lower)
+      ? shiftDay(today, 2)
+      : /بكرة|غداً|غدا/.test(lower)
+        ? shiftDay(today, 1)
         : today;
-    return { title: segment.replace(/^(بكرة|غداً|غدا|اليوم|كل يوم|كل أسبوع|كل شهر)\s*/i, '').trim(), dueDate, recurrence };
+    const title = segment
+      .replace(/^(بعد بكرة|بعد غد|بكرة|غداً|غدا|اليوم)\s*/i, '')
+      .replace(/^(كل يوم|يومياً|يومي|كل أسبوع|أسبوعياً|أسبوعي|كل جمعة|كل شهر|شهرياً|شهري|كل سنة|سنوي)\s*/i, '')
+      .trim();
+    return { title: title || segment, dueDate, recurrence };
   });
 }
 
 function shiftDay(key: string, amount: number): string {
-  const date = new Date(`${key}T12:00:00`);
-  date.setDate(date.getDate() + amount);
-  return date.toISOString().slice(0, 10);
+  const [year, month, day] = key.split('-').map(Number);
+  const date = new Date(year, month - 1, day + amount, 12, 0, 0, 0);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
