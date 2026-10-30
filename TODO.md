@@ -48,5 +48,5 @@
 
 ## 7. التحقق والتسليم
 - [x] إضافة اختبارات تاريخية لمحرك التاريخ والتكرار.
-- [ ] نجاح CI build/test وبناء Firebase Cloud Functions على آخر commit في GitHub Actions.
+- [x] نجاح CI build/test وبناء Firebase Cloud Functions على آخر commit تم التحقق منه في GitHub Actions.
 - [ ] اختبار Google sign-in وFirestore وGemini Cloud Function باستخدام مشروع Firebase فعلي.
